@@ -13,14 +13,20 @@ var app = express();
 
 var db;
 var patientdb;
+var userdb;
+var providerdb;
+var appointmentdb;
 
 var cloudant;
 
 var fileToUpload;
 
 var dbCredentials = {
-    dbName: 'my_sample_db',    
-    patientDbName : 'patientdb'
+    dbName: 'my_sample_db',   
+    userDbName : 'userdb', 
+    providerDbName : 'providerdb',
+    patientDbName : 'patientdb',
+    appointmentDbName : 'appointmentdb'
 };
 
 var bodyParser = require('body-parser');
@@ -93,6 +99,33 @@ function initDBConnection() {
 
     patientdb = cloudant.use(dbCredentials.patientDbName);
 
+    // check if DB exists if not create
+    cloudant.db.create(dbCredentials.appointmentDbName, function(err, res) {
+        if (err) {
+            console.log('Could not create new db: ' + dbCredentials.appointmentDbName + ', it might already exist.');
+        }
+    });
+
+    appointmentdb = cloudant.use(dbCredentials.appointmentDbName);
+
+    // check if DB exists if not create
+    cloudant.db.create(dbCredentials.userDbName, function(err, res) {
+        if (err) {
+            console.log('Could not create new db: ' + dbCredentials.userDbName + ', it might already exist.');
+        }
+    });
+
+    userdb = cloudant.use(dbCredentials.userDbName);
+
+    // check if DB exists if not create
+    cloudant.db.create(dbCredentials.providerDbName, function(err, res) {
+        if (err) {
+            console.log('Could not create new db: ' + dbCredentials.providerDbName + ', it might already exist.');
+        }
+    });
+
+    providerdb = cloudant.use(dbCredentials.providerDbName);
+
 
 }
 
@@ -101,6 +134,31 @@ initDBConnection();
 app.get('/', routes.index);
 
 
+app.post('/api/users', function(request, response) {
+    console.log("Create Invoked..");
+    console.log("User Name: " + request.body.username);
+    console.log("Password: " + request.body.password);
+    console.log("First Name: " + request.body.firstName);
+    console.log("Last Name: " + request.body.lastName);
+    console.log("organization Name: " + request.body.orgName);
+    console.log("organization Description: " + request.body.orgDescription);
+    console.log("homeURL: " + request.body.homeURL);
+
+
+    var user = {
+        username: request.body.username, 
+        password: request.body.password, 
+        firstName: request.body.firstName, 
+        lastName: request.body.lastName, 
+        organization: {
+            orgName: request.body.orgName,
+            orgDescription: request.body.orgDescription,
+            homeURL: request.body.homeURL
+        }
+    };
+    saveDocument(null, user, response);
+});
+
 app.post('/api/patients', function(request, response) {
     console.log("Create Patient Invoked..");
     var patient = request.body;
@@ -108,6 +166,19 @@ app.post('/api/patients', function(request, response) {
     console.log("Patient Created Successfully..");
 });
 
+app.post('/api/providers', function(request, response) {
+    console.log("Create provider Invoked..");
+    var provider = request.body;
+    saveProviderDocument(null, provider, response);
+    console.log("Provider Created Successfully..");
+});
+
+app.post('/api/appointments', function(request, response) {
+    console.log("Create Appointment Invoked..");
+    var appointment = request.body;
+    saveAppointmentDocument(null, appointment, response);
+    console.log("Appointment Created Successfully..");
+});
 
 app.get('/api/patients', function(request, response) {
     console.log("/api/patients method invoked.. ");
@@ -143,7 +214,7 @@ app.get('/api/patients', function(request, response) {
                         response.end();
                     }
                 });
-                console.log('Fetching User');
+                console.log('Fetching Patient');
             });
         } else {
             console.log(err);
@@ -155,46 +226,17 @@ app.get('/api/patients', function(request, response) {
     });
 });
 
-
-
-app.post('/api/users', function(request, response) {
-    console.log("Create Invoked..");
-    console.log("User Name: " + request.body.username);
-    console.log("Password: " + request.body.password);
-    console.log("First Name: " + request.body.firstName);
-    console.log("Last Name: " + request.body.lastName);
-    console.log("organization Name: " + request.body.orgName);
-    console.log("organization Description: " + request.body.orgDescription);
-    console.log("homeURL: " + request.body.homeURL);
-
-
-    var user = {
-        username: request.body.username, 
-        password: request.body.password, 
-        firstName: request.body.firstName, 
-        lastName: request.body.lastName, 
-        organization: {
-            orgName: request.body.orgName,
-            orgDescription: request.body.orgDescription,
-            homeURL: request.body.homeURL
-        }
-    };
-    saveDocument(null, user, response);
-});
-
-
 app.get('/api/users', function(request, response) {
     console.log("/api/users method invoked.. ");
 
-    db = cloudant.use(dbCredentials.dbName);
     var userList = [];
     var i = 0;
-    db.list(function(err, body) {
+    userdb.list(function(err, body) {
         if (!err) {
             var len = body.rows.length;
             console.log('total # of users -> ' + len);
             body.rows.forEach(function(document) {
-                db.get(document.id, {
+                userdb.get(document.id, {
                     revs_info : true
                 }, function(err, user) {
                     if (!err) {
@@ -230,13 +272,108 @@ app.get('/api/users', function(request, response) {
     });
 });
 
+app.get('/api/providers', function(request, response) {
+    console.log("/api/providers method invoked.. ");
+
+    var providerList = [];
+    var i = 0;
+    providerdb.list(function(err, body) {
+        if (!err) {
+            var len = body.rows.length;
+            console.log('total # of providers -> ' + len);
+            body.rows.forEach(function(document) {
+                providerdb.get(document.id, {
+                    revs_info : true
+                }, function(err, provider) {
+                    if (!err) {
+                        providerList.push(provider);
+                        i++;
+                        console.log('provider is ->' + provider);
+
+                        if (i >= len) {
+                            response.write(JSON.stringify({
+                                status : 200,
+                                body : providerList
+                            }));
+
+                            response.end();
+                            console.log('ending response...');
+                        }
+                    } else {
+                        response.write(JSON.stringify({
+                            status : 200
+                        }));
+                        response.end();
+                    }
+                });
+                console.log('Fetching Provider');
+            });
+        } else {
+            console.log(err);
+            response.write(JSON.stringify({
+                status : 200
+            }));
+            response.end();
+        }
+    });
+});
+
+
+app.get('/api/appointments', function(request, response) {
+    console.log("/api/appointments method invoked.. ");
+
+    var appointmentList = [];
+    var i = 0;
+    appointmentdb.list(function(err, body) {
+        if (!err) {
+            var len = body.rows.length;
+            console.log('total # of appointments -> ' + len);
+            body.rows.forEach(function(document) {
+                appointmentdb.get(document.id, {
+                    revs_info : true
+                }, function(err, appointment) {
+                    if (!err) {
+                        appointmentList.push(appointment);
+                        i++;
+                        console.log('appointment is ->' + appointment);
+
+                        if (i >= len) {
+                            response.write(JSON.stringify({
+                                status : 200,
+                                body : appointmentList
+                            }));
+
+                            response.end();
+                            console.log('ending response...');
+                        }
+                    } else {
+                        response.write(JSON.stringify({
+                            status : 200
+                        }));
+                        response.end();
+                    }
+                });
+                console.log('Fetching Appointment');
+            });
+        } else {
+            console.log(err);
+            response.write(JSON.stringify({
+                status : 200
+            }));
+            response.end();
+        }
+    });
+});
+
+
+
 var saveDocument = function(id, json, response) {
     if (id === undefined) {
         // Generated random id
         id = '';
     }
 
-    db.insert(json, id, function(err, doc) {
+    userdb.insert(json, id, function(err, doc) {
         if (err) {
             console.log(err);
             response.sendStatus(500);
@@ -257,6 +394,47 @@ var savePatientDocument = function(id, json, response) {
     }
 
     patientdb.insert(json, id, function(err, doc) {
+        if (err) {
+            console.log(err);
+            response.sendStatus(500);
+        } else{
+            response.write(JSON.stringify({
+                status : 200,
+                body : doc
+            }));
+        }
+        response.end();
+    });
+}
+
+
+var saveAppointmentDocument = function(id, json, response) {
+    if (id === undefined) {
+        // Generated random id
+        id = '';
+    }
+
+    appointmentdb.insert(json, id, function(err, doc) {
+        if (err) {
+            console.log(err);
+            response.sendStatus(500);
+        } else{
+            response.write(JSON.stringify({
+                status : 200,
+                body : doc
+            }));
+        }
+        response.end();
+    });
+}
+
+var saveProviderDocument = function(id, json, response) {
+    if (id === undefined) {
+        // Generated random id
+        id = '';
+    }
+
+    providerdb.insert(json, id, function(err, doc) {
         if (err) {
             console.log(err);
             response.sendStatus(500);

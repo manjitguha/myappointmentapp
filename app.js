@@ -89,6 +89,87 @@ initDBConnection();
 app.get('/', routes.index);
 
 
+app.post('/api/users', function(request, response) {
+    console.log("Create Invoked..");
+    var user = {
+        username: 'johnsmith', password: 'password', firstName: 'John', lastName: 'Smith', organization: {
+            orgName: 'SAINT FRANCIS MEDICAL GROUP INC',
+            orgDescription: 'GROUP PRACTICE',
+            homeURL: '/provider'
+        }
+    };
+    saveDocument(null, user, response);
+});
+
+
+app.get('/api/users', function(request, response) {
+    console.log("/api/users method invoked.. ");
+
+    db = cloudant.use(dbCredentials.dbName);
+    var userList = [];
+    var i = 0;
+    db.list(function(err, body) {
+        if (!err) {
+            var len = body.rows.length;
+            console.log('total # of users -> ' + len);
+            body.rows.forEach(function(document) {
+                db.get(document.id, {
+                    revs_info : true
+                }, function(err, user) {
+                    if (!err) {
+                        userList.push(user);
+                        i++;
+                        console.log('User is ->' + user);
+
+                        if (i >= len) {
+                            response.write(JSON.stringify({
+                                status : 200,
+                                body : userList
+                            }));
+
+                            response.end();
+                            console.log('ending response...');
+                        }
+                    } else {
+                        response.write(JSON.stringify({
+                            status : 200
+                        }));
+                        response.end();
+                    }
+                });
+                console.log('Fetching User');
+            });
+        } else {
+            console.log(err);
+            response.write(JSON.stringify({
+                status : 200
+            }));
+            response.end();
+        }
+    });
+});
+
+var saveDocument = function(id, json, response) {
+    if (id === undefined) {
+        // Generated random id
+        id = '';
+    }
+
+    db.insert(json, id, function(err, doc) {
+        if (err) {
+            console.log(err);
+            response.sendStatus(500);
+        } else{
+            response.write(JSON.stringify({
+                status : 200,
+                body : doc
+            }));
+        }
+        response.end();
+    });
+}
+
+
 http.createServer(app).listen(app.get('port'), '0.0.0.0', function() {
     console.log('Express server listening on port ' + app.get('port'));
 });

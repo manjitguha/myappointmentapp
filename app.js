@@ -12,6 +12,7 @@ var express = require('express'),
 var app = express();
 
 var db;
+var patientdb;
 
 var cloudant;
 
@@ -82,11 +83,78 @@ function initDBConnection() {
     });
 
     db = cloudant.use(dbCredentials.dbName);
+
+    // check if DB exists if not create
+    cloudant.db.create(dbCredentials.patientDbName, function(err, res) {
+        if (err) {
+            console.log('Could not create new db: ' + dbCredentials.patientDbName + ', it might already exist.');
+        }
+    });
+
+    patientdb = cloudant.use(dbCredentials.patientDbName);
+
+
 }
 
 initDBConnection();
 
 app.get('/', routes.index);
+
+
+app.post('/api/patients', function(request, response) {
+    console.log("Create Patient Invoked..");
+    var patient = request.body;
+    savePatientDocument(null, user, response);
+    console.log("Patient Created Successfully..");
+});
+
+
+app.get('/api/patients', function(request, response) {
+    console.log("/api/patients method invoked.. ");
+
+    var patientList = [];
+    var i = 0;
+    patientdb.list(function(err, body) {
+        if (!err) {
+            var len = body.rows.length;
+            console.log('total # of patients -> ' + len);
+            body.rows.forEach(function(document) {
+                patientdb.get(document.id, {
+                    revs_info : true
+                }, function(err, patient) {
+                    if (!err) {
+                        patientList.push(patient);
+                        i++;
+                        console.log('patient is ->' + patient);
+
+                        if (i >= len) {
+                            response.write(JSON.stringify({
+                                status : 200,
+                                body : patientList
+                            }));
+
+                            response.end();
+                            console.log('ending response...');
+                        }
+                    } else {
+                        response.write(JSON.stringify({
+                            status : 200
+                        }));
+                        response.end();
+                    }
+                });
+                console.log('Fetching User');
+            });
+        } else {
+            console.log(err);
+            response.write(JSON.stringify({
+                status : 200
+            }));
+            response.end();
+        }
+    });
+});
+
 
 
 app.post('/api/users', function(request, response) {
@@ -181,6 +249,27 @@ var saveDocument = function(id, json, response) {
         response.end();
     });
 }
+
+var savePatientDocument = function(id, json, response) {
+    if (id === undefined) {
+        // Generated random id
+        id = '';
+    }
+
+    patientdb.insert(json, id, function(err, doc) {
+        if (err) {
+            console.log(err);
+            response.sendStatus(500);
+        } else{
+            response.write(JSON.stringify({
+                status : 200,
+                body : doc
+            }));
+        }
+        response.end();
+    });
+}
+
 
 
 http.createServer(app).listen(app.get('port'), '0.0.0.0', function() {

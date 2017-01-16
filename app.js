@@ -91,11 +91,24 @@ app.get('/', routes.index);
 
 app.post('/api/users', function(request, response) {
     console.log("Create Invoked..");
+    console.log("User Name: " + request.body.username);
+    console.log("Password: " + request.body.password);
+    console.log("First Name: " + request.body.firstName);
+    console.log("Last Name: " + request.body.lastName);
+    console.log("organization Name: " + request.body.orgName);
+    console.log("organization Description: " + request.body.orgDescription);
+    console.log("homeURL: " + request.body.homeURL);
+
+
     var user = {
-        username: 'johnsmith', password: 'password', firstName: 'John', lastName: 'Smith', organization: {
-            orgName: 'SAINT FRANCIS MEDICAL GROUP INC',
-            orgDescription: 'GROUP PRACTICE',
-            homeURL: '/provider'
+        username: request.body.username, 
+        password: request.body.password, 
+        firstName: request.body.firstName, 
+        lastName: request.body.lastName, 
+        organization: {
+            orgName: request.body.orgName,
+            orgDescription: request.body.orgDescription,
+            homeURL: request.body.homeURL
         }
     };
     saveDocument(null, user, response);

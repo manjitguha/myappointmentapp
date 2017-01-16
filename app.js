@@ -104,7 +104,7 @@ app.get('/', routes.index);
 app.post('/api/patients', function(request, response) {
     console.log("Create Patient Invoked..");
     var patient = request.body;
-    savePatientDocument(null, user, response);
+    savePatientDocument(null, patient, response);
     console.log("Patient Created Successfully..");
 });
 

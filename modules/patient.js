@@ -9,8 +9,7 @@ exports.patientServices =  function(app, patientdb){
 
 		patientdb.find(searchParams, function(err, body) {
 		  if (!err){
-      		console.log(JSON.stringify(body.docs));
- 	 		console.log('total # of patients -> ' + body.docs.length);
+      		console.log('total # of patients -> ' + body.docs.length);
 
             response.write(JSON.stringify({
                 status : 200,
@@ -67,11 +66,22 @@ exports.patientServices =  function(app, patientdb){
 
 	app.post('/api/saveallpatients', function(request, response) {
 	    var patients = request.body;
-	    for(loopCounter in patients){
-	    	console.log("Create patient Invoked..");
-	    	savePatientDocument(patients[loopCounter]._id, patients[loopCounter], response);
-	  	    console.log("patient Created Successfully..");
-		}
+	    var timer = 1;
+	    for(var loopCounter in patients){
+	    	timer++;
+    		console.log("Create patient Invoked..");
+	    	patientdb.insert(patients[loopCounter], '', function(err, doc) {
+		        if (err) {
+		            console.log(err);
+		        } 
+		    });
+		    console.log("patient Created Successfully..");
+	    }
+        response.write(JSON.stringify({
+            status : 200,
+            body : '{"message":"Records Sent for Addition"}'
+        }));
+        response.end();	
 	});	
 
 	var savePatientDocument = function(id, json, response) {

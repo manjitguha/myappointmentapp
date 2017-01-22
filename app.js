@@ -4,27 +4,26 @@
 
 var express = require('express'),
     routes = require('./routes'),
-    user = require('./routes/user'),
     http = require('http'),
     path = require('path'),
     fs = require('fs'),
-    patient = require('./modules/patient');
+    patient = require('./modules/patient'),
+    provider = require('./modules/provider'),
+    pharmacy = require('./modules/pharmacy'),
+    lab = require('./modules/lab'),
+    drug = require('./modules/drug'),
+    user = require('./modules/user'),
+    dbconfig = require('./config/dbconfig');
 
 var app = express();
 
-var patientdb;
-var providerdb;
-var appointmentdb;
 
+var db;
 var cloudant;
 
-var fileToUpload;
-
 var dbCredentials = {
-    providerDbName : 'providerdb',
-    patientDbName : 'patientdb',
-    pharmacyDbName : 'pharmacydb'
 };
+
 
 var bodyParser = require('body-parser');
 var methodOverride = require('method-override');
@@ -73,16 +72,42 @@ function initDBConnection() {
         // Alternately you could point to a local database here instead of a
         // Bluemix service.
         // url will be in this format: https://username:password@xxxxxxxxx-bluemix.cloudant.com
-        dbCredentials.url = "REPLACE ME";
+        dbCredentials.url = "https://8cf84732-fde5-498c-b67b-1b41b826c8af-bluemix:f30d83821412744e2b514b105254e7a0befbbc8d8fd06d27b7728567df19919e@8cf84732-fde5-498c-b67b-1b41b826c8af-bluemix.cloudant.com";
     }
+    
+    console.log(dbCredentials.url);
+
+    cloudant = require('cloudant')(dbCredentials.url);
+
+
+    for(dbkey in dbconfig.dbDetails){
+        (function(dbkey){ 
+            console.log('Initializing - ' + dbconfig.dbDetails[dbkey].dbname);
+            var dbRef;
+            cloudant.db.create(dbconfig.dbDetails[dbkey].dbname, function(err, res) {
+                if (err) {
+                    console.log('Could not create new db: ' + dbconfig.dbDetails[dbkey].dbname + ', it might already exist.');
+                }
+            });
+            dbRef = cloudant.use(dbconfig.dbDetails[dbkey].dbname);
+            console.log('Initialized - ' + dbconfig.dbDetails[dbkey].dbname);
+            dbconfig.dbDetails[dbkey].dbRef = dbRef;
+        })(dbkey);
+    }
+
+    console.log(JSON.stringify(dbconfig));
 }
 
 initDBConnection();
 
 app.get('/', routes.index);
 
-alert("App Initialized");
-patient.callMyMethod();
+patient.patientServices(app,dbconfig.dbDetails['patientdb'].dbRef);
+provider.providerServices(app,dbconfig.dbDetails['providerdb'].dbRef);
+pharmacy.pharmacyServices(app,dbconfig.dbDetails['pharmacydb'].dbRef);
+lab.labServices(app,dbconfig.dbDetails['labdb'].dbRef);
+drug.drugServices(app,dbconfig.dbDetails['drugdb'].dbRef);
+user.userServices(app,dbconfig.dbDetails['userdb'].dbRef);
 
 http.createServer(app).listen(app.get('port'), '0.0.0.0', function() {
     console.log('Express server listening on port ' + app.get('port'));

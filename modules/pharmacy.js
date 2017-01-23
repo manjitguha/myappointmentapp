@@ -66,12 +66,23 @@ exports.pharmacyServices =  function(app, pharmacydb){
 
 
 	app.post('/api/saveallpharmacys', function(request, response) {
-	    var pharmacys = request.body;
-	    for(loopCounter in pharmacys){
-	    	console.log("Create pharmacy Invoked..");
-	    	savepharmacyDocument(pharmacys[loopCounter]._id, pharmacys[loopCounter], response);
-	  	    console.log("pharmacy Created Successfully..");
-		}
+	  	var pharmacys = request.body;
+	    var timer = 1;
+	    for(var loopCounter in pharmacys){
+	    	timer++;
+    		console.log("Create pharmacy Invoked..");
+	    	pharmacydb.insert(pharmacys[loopCounter], '', function(err, doc) {
+		        if (err) {
+		            console.log(err);
+		        } 
+		    });
+		    console.log("pharmacy Created Successfully..");
+	    }
+        response.write(JSON.stringify({
+            status : 200,
+            body : '{"message":"Records Sent for Addition"}'
+        }));
+        response.end();	
 	});	
 
 	var savepharmacyDocument = function(id, json, response) {

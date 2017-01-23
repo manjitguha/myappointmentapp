@@ -65,12 +65,23 @@ exports.labServices =  function(app, labdb){
 	});	
 
 	app.post('/api/savealllabs', function(request, response) {
-	    var labs = request.body;
-	    for(loopCounter in labs){
-	    	console.log("Create lab Invoked..");
-	    	savelabDocument(labs[loopCounter]._id, labs[loopCounter], response);
-	  	    console.log("lab Created Successfully..");
-		}
+	   	var labs = request.body;
+	    var timer = 1;
+	    for(var loopCounter in labs){
+	    	timer++;
+    		console.log("Create lab Invoked..");
+	    	labdb.insert(labs[loopCounter], '', function(err, doc) {
+		        if (err) {
+		            console.log(err);
+		        } 
+		    });
+		    console.log("lab Created Successfully..");
+	    }
+        response.write(JSON.stringify({
+            status : 200,
+            body : '{"message":"Records Sent for Addition"}'
+        }));
+        response.end();	
 	});	
 
 

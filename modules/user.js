@@ -35,7 +35,7 @@ exports.userServices =  function(app, userdb){
  	          	
  	          	(function(body,response,userList){	 
  	          		for(var loopCounter in body.rows){
- 	          			if(body.rows[loopCounter].doc.docType === 'user'){
+ 	          			if(body.rows[loopCounter].doc.docType === 'USER'){
 	 	          			userList.push(body.rows[loopCounter].doc);
 	 	          		}
  	          		}         	
@@ -65,12 +65,23 @@ exports.userServices =  function(app, userdb){
 	});	
 
 	app.post('/api/saveallusers', function(request, response) {
-	    var users = request.body;
-	    for(loopCounter in users){
-	    	console.log("Create user Invoked..");
-	    	saveuserDocument(users[loopCounter]._id, users[loopCounter], response);
-	  	    console.log("user Created Successfully..");
-		}
+	  	var users = request.body;
+	    var timer = 1;
+	    for(var loopCounter in users){
+	    	timer++;
+    		console.log("Create user Invoked..");
+	    	userdb.insert(users[loopCounter], '', function(err, doc) {
+		        if (err) {
+		            console.log(err);
+		        } 
+		    });
+		    console.log("user Created Successfully..");
+	    }
+        response.write(JSON.stringify({
+            status : 200,
+            body : '{"message":"Records Sent for Addition"}'
+        }));
+        response.end();	
 	});	
 
 

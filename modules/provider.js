@@ -65,12 +65,23 @@ exports.providerServices =  function(app, providerdb){
 	});	
 
 	app.post('/api/saveallproviders', function(request, response) {
-	    var providers = request.body;
-	    for(loopCounter in providers){
-	    	console.log("Create provider Invoked..");
-	    	saveproviderDocument(providers[loopCounter]._id, providers[loopCounter], response);
-	  	    console.log("provider Created Successfully..");
-		}
+	   	var providers = request.body;
+	    var timer = 1;
+	    for(var loopCounter in providers){
+	    	timer++;
+    		console.log("Create provider Invoked..");
+	    	providerdb.insert(providers[loopCounter], '', function(err, doc) {
+		        if (err) {
+		            console.log(err);
+		        } 
+		    });
+		    console.log("provider Created Successfully..");
+	    }
+        response.write(JSON.stringify({
+            status : 200,
+            body : '{"message":"Records Sent for Addition"}'
+        }));
+        response.end();	
 	});	
 
 

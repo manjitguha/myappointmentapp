@@ -33,11 +33,12 @@ exports.providerServices =  function(app, providerdb){
 	        if (!err) {
 				console.log('total # of docs -> ' + body.rows.length);
  	          	
- 	          	(function(body,response,providerList){	 
+ 	          	(function(body,response,providerList){	
+ 	          		var rows = 0; 
  	          		for(var loopCounter in body.rows){
  	          			if(body.rows[loopCounter].doc.docType === 'PROVIDER'){
-	 	          			providerList.push(body.rows[loopCounter].doc);
-	 	          		}
+ 	          				providerList.push(body.rows[loopCounter].doc);
+		 	          	}
  	          		}         	
 
  	          		response.write(JSON.stringify({
@@ -104,4 +105,8 @@ exports.providerServices =  function(app, providerdb){
 	        response.end();
 	    });
 	};
+
+	var camelCase = function(str){
+		return str.charAt(0).toUpperCase()+str.substring(1).toLowerCase();
+	}
 };

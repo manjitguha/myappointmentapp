@@ -6,5 +6,6 @@ exports.dbDetails = {
 	'pharmacydb':{'dbname':'pharmacydb'},
 	'drugdb':{'dbname':'drugdb'},
 	'labdb':{'dbname':'labdb'},
-	'userdb':{'dbname':'userdb'}
+	'userdb':{'dbname':'userdb'},
+	'secretorydb':{'dbname':'secretorydb'}
 };

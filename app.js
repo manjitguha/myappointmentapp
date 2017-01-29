@@ -13,6 +13,7 @@ var express = require('express'),
     lab = require('./modules/lab'),
     drug = require('./modules/drug'),
     user = require('./modules/user'),
+    secretory = require('./modules/secretory')
     dbconfig = require('./config/dbconfig');
 
 var app = express();
@@ -108,6 +109,7 @@ pharmacy.pharmacyServices(app,dbconfig.dbDetails['pharmacydb'].dbRef);
 lab.labServices(app,dbconfig.dbDetails['labdb'].dbRef);
 drug.drugServices(app,dbconfig.dbDetails['drugdb'].dbRef);
 user.userServices(app,dbconfig.dbDetails['userdb'].dbRef);
+secretory.secretoryServices(app,dbconfig.dbDetails['secretorydb'].dbRef);
 
 http.createServer(app).listen(app.get('port'), '0.0.0.0', function() {
     console.log('Express server listening on port ' + app.get('port'));

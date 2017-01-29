@@ -1,6 +1,6 @@
 'use strict';
 
-exports.userServices =  function(app, userdb){
+exports.userServices =  function(app, userdb, patientdb){
 	app.post('/api/searchuser', function(request, response) {
 	    console.log("Search user Invoked..");
 	    var searchParams = request.body;
@@ -83,7 +83,6 @@ exports.userServices =  function(app, userdb){
         }));
         response.end();	
 	});	
-
 
 	var saveuserDocument = function(id, json, response) {
 	    if (id === undefined) {

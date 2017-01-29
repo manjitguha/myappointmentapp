@@ -36,7 +36,7 @@ exports.providerServices =  function(app, providerdb){
  	          	(function(body,response,providerList){	
  	          		var rows = 0; 
  	          		for(var loopCounter in body.rows){
- 	          			if(body.rows[loopCounter].doc.docType === 'PROVIDER'){
+ 	          			if(body.rows[loopCounter].doc.docType === 'LABORATORY'){
  	          				providerList.push(body.rows[loopCounter].doc);
 		 	          	}
  	          		}         	
